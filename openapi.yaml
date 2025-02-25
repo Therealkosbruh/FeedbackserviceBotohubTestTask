@@ -1,0 +1,285 @@
+openapi: 3.0.0
+info:
+  title: Feedback API
+  description: API для работы с отзывами и предложениями пользователей.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Локальный сервер
+
+paths:
+  /register:
+    post:
+      summary: Регистрация нового пользователя
+      tags:
+        - Пользователи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "Password123!"
+                avatar:
+                  type: string
+                  example: "https://example.com/avatar.png"
+      responses:
+        201:
+          description: Пользователь успешно зарегистрирован
+        400:
+          description: Ошибка валидации
+
+  /login:
+    post:
+      summary: Авторизация пользователя
+      tags:
+        - Пользователи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "Password123!"
+      responses:
+        200:
+          description: Успешный вход, возвращает токен
+        400:
+          description: Неверные учетные данные
+
+  /me:
+    get:
+      summary: Получение данных текущего пользователя
+      tags:
+        - Пользователи
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Информация о пользователе
+        401:
+          description: Неавторизованный запрос
+
+  /feedback:
+    post:
+      summary: Создать новый отзыв
+      tags:
+        - Предложения
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - categoryId
+                - statusId
+              properties:
+                title:
+                  type: string
+                  example: "Добавить темную тему"
+                description:
+                  type: string
+                  example: "Очень хотелось бы иметь темный режим интерфейса."
+                categoryId:
+                  type: integer
+                  example: 1
+                statusId:
+                  type: integer
+                  example: 2
+      responses:
+        201:
+          description: Отзыв успешно создан
+        400:
+          description: Ошибка валидации
+
+    get:
+      summary: Получить список всех отзывов
+      tags:
+        - Предложения
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Фильтр по категории
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Фильтр по статусу
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [createdAt, upvotes]
+          description: Поле для сортировки
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Порядок сортировки
+        - name: page
+          in: query
+          schema:
+            type: integer
+          description: Номер страницы
+      responses:
+        200:
+          description: Список отзывов
+
+  /feedback/{id}:
+    get:
+      summary: Получить отзыв по ID
+      tags:
+        - Предложения
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID отзыва
+      responses:
+        200:
+          description: Информация о конкретном отзыве
+        404:
+          description: Отзыв не найден
+
+    put:
+      summary: Обновить отзыв
+      tags:
+        - Предложения
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                categoryId:
+                  type: integer
+                statusId:
+                  type: integer
+      responses:
+        200:
+          description: Отзыв обновлен
+        404:
+          description: Отзыв не найден
+
+    delete:
+      summary: Удалить отзыв
+      tags:
+        - Предложения
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Отзыв удален
+        404:
+          description: Отзыв не найден
+
+  /categories:
+    get:
+      summary: Получить список всех категорий
+      tags:
+        - Категории
+      responses:
+        200:
+          description: Список категорий
+
+  /statuses:
+    get:
+      summary: Получить список всех статусов
+      tags:
+        - Статусы
+      responses:
+        200:
+          description: Список статусов
+
+  /upvote/{postId}:
+    post:
+      summary: Проголосовать за отзыв
+      tags:
+        - Голосование
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID отзыва
+      responses:
+        200:
+          description: Голос засчитан
+        400:
+          description: Ошибка голосования
+
+    delete:
+      summary: Отменить голос за отзыв
+      tags:
+        - Голосование
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID отзыва
+      responses:
+        200:
+          description: Голос удален
+        400:
+          description: Ошибка удаления голоса
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
